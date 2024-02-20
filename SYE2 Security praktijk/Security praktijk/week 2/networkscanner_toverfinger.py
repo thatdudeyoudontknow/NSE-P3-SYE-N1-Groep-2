@@ -6,17 +6,19 @@ pycodesyle score: 10/10
 #pycodestyle --show-source --show-pep8 .\networkscanner_toverfinger.py
 """
 import os
+import ipaddress
+import socket
 import psutil
 
+
+# Automatic Private IP Addressing (APIPA) prefix
 APIPA_PREFIX = "169.254"
 
 
 def get_network_adapters():
     """
-    Retrieves the available network adapters on the system.
-
-    Returns:
-        list: A list of available network adapters.
+    Returns a list of available network adapters that are up and running
+    and do not have an Automatic Private IP Addressing (APIPA).
     """
     network_addresses = psutil.net_if_addrs()
     network_stats = psutil.net_if_stats()
@@ -24,38 +26,20 @@ def get_network_adapters():
     available_networks = []
     for interface, addr_list in network_addresses.items():
         # Skip adapters with Automatic Private IP Addressing (APIPA)
-        if any(
-            getattr(addr, 'address').startswith(APIPA_PREFIX)
-            for addr in addr_list
-        ):
+        if any(addr.address.startswith("169.254") for addr in addr_list):
             continue
         # Check if the interface is up and running
-        if interface in network_stats and getattr(
-                network_stats[interface], "isup"):
-            available_networks.append(interface)
+        if interface in network_stats and network_stats[interface].isup:
+            for addr in addr_list:
+                if addr.family == socket.AF_INET:
+                    netmask = addr.netmask
+                    ip_with_netmask = (
+                        f"{addr.address}/"
+                        f"{ipaddress.IPv4Network((0, netmask)).prefixlen}"
+                    )
+                    available_networks.append((interface, ip_with_netmask))
 
     return available_networks
-
-
-def get_ip_from_ipconfig(adapter_name):
-    """
-    Retrieves the IP address associated with the specified network adapter.
-
-    Parameters:
-    adapter_name (str): The name of the network adapter.
-
-    Returns:
-    str: The IP address associated with the network adapter,
-    or None if not found.
-    """
-    addrs = psutil.net_if_addrs()
-    for interface, addr_list in addrs.items():
-        if interface == adapter_name:
-            for addr in addr_list:
-                if addr.family == psutil.AF_LINK:
-                    continue
-                return addr.address
-    return None
 
 
 def clear_terminal():
@@ -81,13 +65,14 @@ def main():
         print("Getting IP range from ipconfig...")
         adapters = get_network_adapters()
         for i, adapter in enumerate(adapters, start=1):
-            print(f"{i}. {adapter}")
+            print(f"{i}. {adapter[0]}")
         selected_adapter_index = int(input("Select a network adapter: ")) - 1
         clear_terminal()
         selected_adapter = adapters[selected_adapter_index]
-        ip_address = get_ip_from_ipconfig(selected_adapter)
+        ip_address = selected_adapter[1]
         if ip_address:
-            print(f"IP address of {selected_adapter}: {ip_address}")
+            print(f"IP address of {ip_address}")
+            print(ip_address)
         else:
             print(f"No IP found for {selected_adapter}")
     else:
