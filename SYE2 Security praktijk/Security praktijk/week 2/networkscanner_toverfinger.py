@@ -9,6 +9,8 @@ import os
 import ipaddress
 import socket
 import psutil
+from pythonping import ping
+
 
 
 # Automatic Private IP Addressing (APIPA) prefix
@@ -49,6 +51,39 @@ def clear_terminal():
     os.system('cls')
 
 
+def ping_cidr_network(cidr):
+    # Verkrijg basis-IP-adres en aantal hostbits van CIDR-notatie
+    ip_network = ipaddress.ip_network(cidr, strict=False)
+    base_ip = ip_network.network_address
+    subnet_mask = ip_network.netmask
+    host_bits = subnet_mask.max_prefixlen - ip_network.prefixlen
+
+    # Bepaal het aantal IP-adressen in het subnetwerk
+    num_addresses = 2 ** host_bits
+
+    # Ping elk IP-adres in het subnetwerk
+    live_hosts = []
+    for i in range(num_addresses):
+        ip = base_ip + i
+        response = ping(str(ip), count=1)
+        if response.success():
+            print(f"{ip} is live.")
+            live_hosts.append(ip)
+        else:
+            print(f"{ip} is not reachable.")
+
+
+    return live_hosts
+
+# Voorbeeldgebruik:
+def abe(ip_address):
+    cidr = ip_address
+    live_hosts = ping_cidr_network(cidr)
+    print("Live hosts:")
+    for host in live_hosts:
+        print(host)    
+
+
 def main():
     """
     This function is the entry point of the network scanner program.
@@ -73,6 +108,7 @@ def main():
         if ip_address:
             print(f"IP address of {ip_address}")
             print(ip_address)
+            abe(ip_address)
         else:
             print(f"No IP found for {selected_adapter}")
     else:
@@ -80,6 +116,7 @@ def main():
         # Handle manual IP range entry
         ip_range = input("Enter the IP range (e.g., 192.168.1.0/24): ")
         print(f"You entered: {ip_range}")
+
 
 
 if __name__ == "__main__":
