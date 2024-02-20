@@ -12,7 +12,6 @@ import psutil
 from pythonping import ping
 
 
-
 # Automatic Private IP Addressing (APIPA) prefix
 APIPA_PREFIX = "169.254"
 
@@ -52,6 +51,14 @@ def clear_terminal():
 
 
 def ping_cidr_network(cidr):
+    """
+    Ping all IP addresses in a given CIDR network and return a list
+    of live hosts.
+    Args:
+        cidr (str): The CIDR notation representing the network.
+    Returns:
+        list: A list of live host IP addresses.
+    """
     # Verkrijg basis-IP-adres en aantal hostbits van CIDR-notatie
     ip_network = ipaddress.ip_network(cidr, strict=False)
     base_ip = ip_network.network_address
@@ -71,17 +78,24 @@ def ping_cidr_network(cidr):
             live_hosts.append(ip)
         else:
             print(f"{ip} is not reachable.")
-
-
     return live_hosts
+
 
 # Voorbeeldgebruik:
 def abe(ip_address):
+    """
+    Function to scan a network for live hosts using ICMP ping.
+    Args:
+        ip_address (str): The IP address or CIDR notation of the network
+        to scan.
+    Returns:
+        None
+    """
     cidr = ip_address
     live_hosts = ping_cidr_network(cidr)
     print("Live hosts:")
     for host in live_hosts:
-        print(host)    
+        print(host)
 
 
 def main():
@@ -116,7 +130,6 @@ def main():
         # Handle manual IP range entry
         ip_range = input("Enter the IP range (e.g., 192.168.1.0/24): ")
         print(f"You entered: {ip_range}")
-
 
 
 if __name__ == "__main__":
