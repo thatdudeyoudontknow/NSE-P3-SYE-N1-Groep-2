@@ -72,7 +72,7 @@ def main():
         ip_address = selected_adapter[1]
         if ip_address:
             print(f"IP address of {ip_address}")
-            print(ip_address)
+            
         else:
             print(f"No IP found for {selected_adapter}")
     else:
