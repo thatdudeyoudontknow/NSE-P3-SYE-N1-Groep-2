@@ -8,7 +8,7 @@ def scan_live_ips(target_ip):
     # Combineer het Ethernet-frame en het ARP-pakket
     packet = ether / arp
     # Verzend het pakket en ontvang antwoorden
-    result = srp(packet, timeout=10, verbose=0)[0]
+    result = srp(packet, timeout=3, verbose=0)[0]
     # Lijst om live IP-adressen op te slaan
     live_ips = []
     # Loop door de ontvangen antwoorden

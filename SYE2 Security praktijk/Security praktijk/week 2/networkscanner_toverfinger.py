@@ -10,7 +10,7 @@ import ipaddress
 import socket
 import psutil
 from pythonping import ping
-from scapy.all import srp, Ether, ARP
+from scapy.all import srp, ARP,Ether
 
 # Automatic Private IP Addressing (APIPA) prefix
 APIPA_PREFIX = "169.254"
@@ -132,7 +132,7 @@ def main():
 
     if choice == '2':
         clear_terminal()
-        print("Getting IP range from ipconfig...")
+        print("Getting IP range...")
         adapters = get_network_adapters()
         for i, adapter in enumerate(adapters, start=1):
             print(f"{i}. {adapter[0]}")
