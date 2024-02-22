@@ -21,6 +21,9 @@ def ping_cidr_network(cidr):
             mac_address = get_mac_address(str(ip))
             print(f"IP: {ip} MAC: {mac_address} is live.")
             live_hosts.append((ip, mac_address))
+            
+
+
         else:
             print(f"{ip} is not reachable.")
 

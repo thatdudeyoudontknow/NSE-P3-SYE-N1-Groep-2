@@ -10,7 +10,7 @@ import ipaddress
 import socket
 import psutil
 from pythonping import ping
-
+from scapy.all import srp, Ether, ARP
 
 # Automatic Private IP Addressing (APIPA) prefix
 APIPA_PREFIX = "169.254"
@@ -68,17 +68,38 @@ def ping_cidr_network(cidr):
     # Bepaal het aantal IP-adressen in het subnetwerk
     num_addresses = 2 ** host_bits
 
-    # Ping elk IP-adres in het subnetwerk
+    # Define the file objects
+    live_hosts_file = open("live_hosts.txt", "w")
+    unreachable_hosts_file = open("unreachable_hosts.txt", "w")
+
+    # Ping each IP address in the subnet
     live_hosts = []
     for i in range(num_addresses):
         ip = base_ip + i
         response = ping(str(ip), count=1)
         if response.success():
-            print(f"{ip} is live.")
-            live_hosts.append(ip)
+            mac_address = get_mac_address(str(ip))
+            live_hosts_file.write(f"IP: {ip} MAC: {mac_address} is live.\n")
+            print(f"IP: {ip} MAC: {mac_address} is live.")
+            live_hosts.append((ip, mac_address))
+
+
         else:
             print(f"{ip} is not reachable.")
+            unreachable_hosts_file.write(f"{ip} is not reachable.\n")
+
+    # Close the file objects
+    live_hosts_file.close()
+    unreachable_hosts_file.close()
     return live_hosts
+
+
+def get_mac_address(ip_address):
+    arp = ARP(pdst=ip_address)
+    ether = Ether(dst="ff:ff:ff:ff:ff:ff")
+    packet = ether / arp
+    result = srp(packet, timeout=3, verbose=False)[0]
+    return result[0][1].hwsrc if result else None
 
 
 # Voorbeeldgebruik:
