@@ -11,6 +11,10 @@ import socket
 import psutil
 from pythonping import ping
 from scapy.all import srp, ARP,Ether
+import threading
+
+live_hosts_file = open("live_hosts.txt", "w")
+unreachable_hosts_file = open("unreachable_hosts.txt", "w")
 
 # Automatic Private IP Addressing (APIPA) prefix
 APIPA_PREFIX = "169.254"
@@ -43,6 +47,66 @@ def get_network_adapters():
     return available_networks
 
 
+def scan_ports():
+    # Lijst van IP-adressen om te scannen
+    global live_hosts_file
+    #gets all the live hosts from live_hosts_file and stores them in a list
+    live_hosts = live_hosts_file.readlines()
+    target_hosts = [host.split()[1] for host in live_hosts]
+    
+    min_port = 1  # Minimale poort
+    max_port = 1024  # Maximale poort
+
+    print(f"Scannen van poorten {min_port} t/m {max_port} op de volgende IP-adressen: {target_hosts}")
+
+    # Loop over alle IP-adressen en scan de poorten
+    for target_host in target_hosts:
+        open_ports = []  # Lijst om de open poorten op te slaan
+
+        # Multithreading: maak een thread voor elke poort en start deze
+        threads = []
+        for port in range(min_port, max_port + 1):
+            try:
+                s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)  # Maak een TCP socket
+                s.settimeout(1)  # Stel de time-out in op 1 seconde
+                result = s.connect_ex((target_host, port))  # Probeert verbinding te maken met het opgegeven adres en poort
+                s.close()  # Sluit de socket
+                if result == 0:  # Als de poort open is (0 betekent succesvolle verbinding)
+                    open_ports.append(port)  # Voeg de open poort toe aan de lijst
+            except Exception as e:  # Vang eventuele fouten op
+                print(f"Fout bij het scannen van poort {port}: {e}")  # Druk de fout af
+
+            thread = threading.Thread(target=scan_port, args=(target_host, port, open_ports))  # Maak een thread voor het scannen van de poort
+            threads.append(thread)  # Voeg de thread toe aan de lijst met threads
+            thread.start()  # Start de thread
+
+        # Wacht tot alle threads zijn voltooid
+        for thread in threads:
+            thread.join()  # Wacht op de voltooiing van elke thread
+
+        # Afdrukken van de lijst met open poorten voor dit IP-adres
+        print(f"IP: {target_host}, OpenPoort(en): {open_ports}")
+
+def scan_live_ips(target_ip):
+    # Maak een ARP-pakket om uit te zenden
+    arp = ARP(pdst=target_ip)
+    # Maak een Ethernet-frame
+    ether = Ether(dst="ff:ff:ff:ff:ff:ff")
+    # Combineer het Ethernet-frame en het ARP-pakket
+    packet = ether / arp
+    # Verzend het pakket en ontvang antwoorden
+    result = srp(packet, timeout=3, verbose=0)[0]
+    # Lijst om live IP-adressen op te slaan
+    live_ips = []
+    # Loop door de ontvangen antwoorden
+    for sent, received in result:
+        # Voeg het IP-adres toe aan de lijst met live IPs
+        live_ips.append(received.psrc)
+        print(received.psrc)
+
+    return live_ips
+
+
 def clear_terminal():
     """
     Clears the terminal screen.
@@ -69,8 +133,7 @@ def ping_cidr_network(cidr):
     num_addresses = 2 ** host_bits
 
     # Define the file objects
-    live_hosts_file = open("live_hosts.txt", "w")
-    unreachable_hosts_file = open("unreachable_hosts.txt", "w")
+    global live_hosts_file, unreachable_hosts_file
 
     # Ping each IP address in the subnet
     live_hosts = []
@@ -117,6 +180,7 @@ def abe(ip_address):
     print("Live hosts:")
     for host in live_hosts:
         print(host)
+    return live_hosts
 
 
 def main():
@@ -129,7 +193,7 @@ def main():
     print("1. Enter IP range manually")
     print("2. Get IP range from ipconfig")
     choice = input("Enter your choice (1 or 2): ")
-
+    clear_terminal()
     if choice == '2':
         clear_terminal()
         print("Getting IP range...")
@@ -140,10 +204,17 @@ def main():
         clear_terminal()
         selected_adapter = adapters[selected_adapter_index]
         ip_address = selected_adapter[1]
-        if ip_address:
-            print(f"IP address of {ip_address}")
-            print(ip_address)
+        print("1. Get IP range from ipconfig (fast but less accurate)")
+        print("2. Get IP range from network adapters (slow but accurate)")
+        choice = input("Enter your choice (1 or 2): ")
+        print(f"IP address of {ip_address}")
+        print(ip_address)
+        
+        if choice== '2' and ip_address:
             abe(ip_address)
+        if choice == '1':
+            scan_live_ips(ip_address)
+            
         else:
             print(f"No IP found for {selected_adapter}")
     else:
