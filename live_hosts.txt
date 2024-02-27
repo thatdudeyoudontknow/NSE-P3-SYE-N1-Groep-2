@@ -1,4 +1,5 @@
-IP: 192.168.1.1 MAC: None is live.
-IP: 192.168.1.10 MAC: None is live.
-IP: 192.168.1.23 MAC: None is live.
-IP: 192.168.1.30 MAC: None is live.
+
+IP: 192.168.1.1 MAC: f0-ad-4e-1b-b1-12 is live.
+IP: 192.168.1.10 MAC: b8-ca-3a-92-b1-e6 is live.
+IP: 192.168.1.23 MAC: b8-ca-3a-92-bc-a5 is live.
+IP: 192.168.1.30 MAC: b8-ca-3a-92-b1-d9 is live.

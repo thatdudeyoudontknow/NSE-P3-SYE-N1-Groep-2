@@ -13,9 +13,11 @@ from pythonping import ping
 from scapy.all import srp, ARP,Ether
 import threading
 import subprocess
+import nmap
 
-live_hosts_file = open("live_hosts.txt", "w")
-unreachable_hosts_file = open("unreachable_hosts.txt", "w")
+# Open the file objects
+live_hosts_file = open("live_hosts.txt", "a")
+unreachable_hosts_file = open("unreachable_hosts.txt", "a")
 
 # Automatic Private IP Addressing (APIPA) prefix
 APIPA_PREFIX = "169.254"
@@ -96,30 +98,31 @@ def scan_ports():
         print(f"IP: {target_host}, OpenPoort(en): {open_ports}")
 
 
-def arp_a(ip_address):
-    try:
-        # Voer de 'arp -a' opdracht uit en decodeer de uitvoer naar een leesbare string
-        arp_output = subprocess.check_output(['arp', '-a', ip_address]).decode('utf-8')
-        return arp_output  # Retourneer de uitvoer van 'arp -a'
-    except subprocess.CalledProcessError:
-        return None  # Retourneer None als er een fout optreedt tijdens het uitvoeren van de opdracht
+# def arp_a(ip_address):
+#     try:
+#         # Voer de 'arp -a' opdracht uit en decodeer de uitvoer naar een leesbare string
+#         arp_output = subprocess.check_output(['arp', '-a', ip_address]).decode('utf-8')
+#         return arp_output  # Retourneer de uitvoer van 'arp -a'
+#     except subprocess.CalledProcessError:
+#         return None  # Retourneer None als er een fout optreedt tijdens het uitvoeren van de opdracht
 
-def find_MAC():
-    # Lijst van IP-adressen om te scannen
-    global live_hosts_file
-    #gets all the live hosts from live_hosts_file and stores them in a list
-    with open('live_hosts.txt', 'r') as live_hosts_file:
-        live_hosts = live_hosts_file.readlines()
-
-    target_hosts = [host.split()[1] for host in live_hosts]
-
-    for ip_address in target_hosts:
-        arp_result = arp_a(ip_address)  # Voer 'arp -a' uit voor het huidige IP-adres
-        if arp_result:
-            print(f"ARP result for {ip_address}:")
-            print(arp_result)  # Print de ARP-resultaten als er resultaten zijn
-        else:
-            print(f"No ARP result found for {ip_address}")  # Print een melding als er geen resultaten zijn gevonden
+# def find_MAC():
+#     # Lijst van IP-adressen om te scannen
+#     global live_hosts_file
+#     #gets all the live hosts from live_hosts_file and stores them in a list
+#     with open('live_hosts.txt', 'r') as live_hosts_file:
+#         live_hosts = live_hosts_file.readlines()
+#     print (f"Scanning MAC address for {live_hosts}")
+#     target_hosts = [host.split()[1] for host in live_hosts]
+#     print (f"Scanning MAC address for {target_hosts}")
+#     for ip_address in target_hosts:
+#         print (f"Scanning MAC address for {ip_address}")
+#         arp_result = arp_a(ip_address)  # Voer 'arp -a' uit voor het huidige IP-adres
+#         if arp_result:
+#             print(f"ARP result for {ip_address}:")
+#             print(arp_result)  # Print de ARP-resultaten als er resultaten zijn
+#         else:
+#             print(f"No ARP result found for {ip_address}")  # Print een melding als er geen resultaten zijn gevonden
 
 
 
@@ -182,7 +185,10 @@ def ping_cidr_network(cidr):
         response = ping(str(ip), count=1)
         if response.success():
             mac_address = get_mac_address(str(ip))
-            live_hosts_file.write(f"IP: {ip} MAC: {mac_address} is live.\n")
+            #call scan_ip function to get the os type and pass it a list of live hosts
+            os_type = scan_ip(ip)
+            print(os_type)
+            live_hosts_file.write(f"IP: {ip} MAC: {mac_address} OS:{os_type}  is live.\n")
             print(f"IP: {ip} MAC: {mac_address} is live.")
             live_hosts.append((ip, mac_address))
 
@@ -196,13 +202,30 @@ def ping_cidr_network(cidr):
     unreachable_hosts_file.close()
     return live_hosts
 
+def scan_ip(ip_address):
+    scanner = nmap.PortScanner()
+    scanner.scan(ip_address, arguments='-O')
+
+    if scanner[ip_address]['osmatch']:
+        os_type = scanner[ip_address]['osmatch'][0]['name']
+        return os_type
+    else:
+        return "Unknown"
+
 
 def get_mac_address(ip_address):
-    arp = ARP(pdst=ip_address)
-    ether = Ether(dst="ff:ff:ff:ff:ff:ff")
-    packet = ether / arp
-    result = srp(packet, timeout=3, verbose=False)[0]
-    return result[0][1].hwsrc if result else None
+
+    try:
+        # Voer de 'arp -a' opdracht uit en decodeer de uitvoer naar een leesbare string
+        arp_output = subprocess.check_output(['arp', '-a', ip_address]).decode('utf-8')
+        #return the output of 'arp -a' but only the mac address
+
+        return arp_output.split()[10]
+    except subprocess.CalledProcessError:
+        print (f"No MAC address found for {ip_address}")
+        return None
+
+
 
 
 # Voorbeeldgebruik:
@@ -260,8 +283,9 @@ def main():
             port_scan = input("Do you want to scan the live hosts for open ports? (y/n): ")
             if port_scan == 'y':
                 scan_ports()
-                find_MAC()
-            
+            else:
+                #exit the program
+                exit()
         else:
             print(f"No IP found for {selected_adapter}")
     else:
