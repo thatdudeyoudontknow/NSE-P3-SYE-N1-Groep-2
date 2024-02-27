@@ -185,11 +185,10 @@ def ping_cidr_network(cidr):
         response = ping(str(ip), count=1)
         if response.success():
             mac_address = get_mac_address(str(ip))
-            #call scan_ip function to get the os type and pass it a list of live hosts
-            os_type = scan_ip(ip)
-            print(os_type)
-            live_hosts_file.write(f"IP: {ip} MAC: {mac_address} OS:{os_type}  is live.\n")
-            print(f"IP: {ip} MAC: {mac_address} is live.")
+            #call scan_ip function 
+            os_type = scan_ip(str(ip))
+            live_hosts_file.write(f"IP: {ip} MAC: {mac_address} OS: {os_type}  is live.\n")
+            print(f"IP: {ip} MAC: {mac_address} OS: {os_type}  is live.")
             live_hosts.append((ip, mac_address))
 
 
