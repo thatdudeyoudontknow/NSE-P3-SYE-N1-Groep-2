@@ -57,7 +57,10 @@ def scan_port(host, port, open_ports):
         result = s.connect_ex((host, port))  # Probeert verbinding te maken met het opgegeven adres en poort
         s.close()  # Sluit de socket
         if result == 0:  # Als de poort open is (0 betekent succesvolle verbinding)
-            open_ports.append(port)  # Voeg de open poort toe aan de lijst
+            nm = nmap.PortScanner()
+            nm.scan(host, str(port))
+            service = nm[host]['tcp'][port]['name']
+            open_ports.append((port, service))  # Voeg de open poort toe aan de lijst
     except Exception as e:  # Vang eventuele fouten op
         print(f"Fout bij het scannen van poort {port}: {e}")  # Druk de fout af
 
@@ -90,12 +93,8 @@ def scan_ports():
         for thread in threads:
             thread.join()  # Wacht op de voltooiing van elke thread
 
-        # Afdrukken van de lijst met open poorten voor dit IP-adres
-        print(f"IP: {target_host}, OpenPoort(en): {open_ports}")
-
-
-        # Afdrukken van de lijst met open poorten voor dit IP-adres
-        print(f"IP: {target_host}, OpenPoort(en): {open_ports}")
+        open_ports_str = ", ".join([f"{port} ({service})" for port, service in open_ports])
+        print(f"IP: {target_host}, OpenPoort(en): {open_ports_str}")
 
 
 # def arp_a(ip_address):
@@ -124,7 +123,13 @@ def scan_ports():
 #         else:
 #             print(f"No ARP result found for {ip_address}")  # Print een melding als er geen resultaten zijn gevonden
 
-
+def get_hostname(ip_address):
+    try:
+        # Resolve the IP address to hostname
+        hostname, _, _ = socket.gethostbyaddr(ip_address)
+        return hostname
+    except socket.herror:
+        return "Unable to resolve hostname"
 
 
 def scan_live_ips(target_ip):
@@ -187,8 +192,9 @@ def ping_cidr_network(cidr):
             mac_address = get_mac_address(str(ip))
             #call scan_ip function 
             os_type = scan_ip(str(ip))
-            live_hosts_file.write(f"IP: {ip} MAC: {mac_address} OS: {os_type}  is live.\n")
-            print(f"IP: {ip} MAC: {mac_address} OS: {os_type}  is live.")
+            hostname = get_hostname(str(ip))
+            live_hosts_file.write(f"IP: {ip} MAC: {mac_address} OS: {os_type} Hostname: {hostname}  is live.\n")
+            print(f"\nHit on\nIP: {ip} \nMAC: {mac_address} \nOS: {os_type} \nHostname: {hostname}  \n")
             live_hosts.append((ip, mac_address))
 
 
