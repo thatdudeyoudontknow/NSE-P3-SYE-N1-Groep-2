@@ -12,6 +12,7 @@ import psutil
 from pythonping import ping
 from scapy.all import srp, ARP,Ether
 import threading
+import subprocess
 
 live_hosts_file = open("live_hosts.txt", "w")
 unreachable_hosts_file = open("unreachable_hosts.txt", "w")
@@ -47,15 +48,28 @@ def get_network_adapters():
     return available_networks
 
 
+def scan_port(host, port, open_ports):
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)  # Maak een TCP socket
+        s.settimeout(1)  # Stel de time-out in op 1 seconde
+        result = s.connect_ex((host, port))  # Probeert verbinding te maken met het opgegeven adres en poort
+        s.close()  # Sluit de socket
+        if result == 0:  # Als de poort open is (0 betekent succesvolle verbinding)
+            open_ports.append(port)  # Voeg de open poort toe aan de lijst
+    except Exception as e:  # Vang eventuele fouten op
+        print(f"Fout bij het scannen van poort {port}: {e}")  # Druk de fout af
+
+
 def scan_ports():
     # Lijst van IP-adressen om te scannen
     global live_hosts_file
     #gets all the live hosts from live_hosts_file and stores them in a list
-    live_hosts = live_hosts_file.readlines()
+    with open('live_hosts.txt', 'r') as live_hosts_file:
+        live_hosts = live_hosts_file.readlines()
     target_hosts = [host.split()[1] for host in live_hosts]
     
     min_port = 1  # Minimale poort
-    max_port = 1024  # Maximale poort
+    max_port = 65535  # Maximale poort
 
     print(f"Scannen van poorten {min_port} t/m {max_port} op de volgende IP-adressen: {target_hosts}")
 
@@ -66,16 +80,6 @@ def scan_ports():
         # Multithreading: maak een thread voor elke poort en start deze
         threads = []
         for port in range(min_port, max_port + 1):
-            try:
-                s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)  # Maak een TCP socket
-                s.settimeout(1)  # Stel de time-out in op 1 seconde
-                result = s.connect_ex((target_host, port))  # Probeert verbinding te maken met het opgegeven adres en poort
-                s.close()  # Sluit de socket
-                if result == 0:  # Als de poort open is (0 betekent succesvolle verbinding)
-                    open_ports.append(port)  # Voeg de open poort toe aan de lijst
-            except Exception as e:  # Vang eventuele fouten op
-                print(f"Fout bij het scannen van poort {port}: {e}")  # Druk de fout af
-
             thread = threading.Thread(target=scan_port, args=(target_host, port, open_ports))  # Maak een thread voor het scannen van de poort
             threads.append(thread)  # Voeg de thread toe aan de lijst met threads
             thread.start()  # Start de thread
@@ -86,6 +90,39 @@ def scan_ports():
 
         # Afdrukken van de lijst met open poorten voor dit IP-adres
         print(f"IP: {target_host}, OpenPoort(en): {open_ports}")
+
+
+        # Afdrukken van de lijst met open poorten voor dit IP-adres
+        print(f"IP: {target_host}, OpenPoort(en): {open_ports}")
+
+
+def arp_a(ip_address):
+    try:
+        # Voer de 'arp -a' opdracht uit en decodeer de uitvoer naar een leesbare string
+        arp_output = subprocess.check_output(['arp', '-a', ip_address]).decode('utf-8')
+        return arp_output  # Retourneer de uitvoer van 'arp -a'
+    except subprocess.CalledProcessError:
+        return None  # Retourneer None als er een fout optreedt tijdens het uitvoeren van de opdracht
+
+def find_MAC():
+    # Lijst van IP-adressen om te scannen
+    global live_hosts_file
+    #gets all the live hosts from live_hosts_file and stores them in a list
+    with open('live_hosts.txt', 'r') as live_hosts_file:
+        live_hosts = live_hosts_file.readlines()
+
+    target_hosts = [host.split()[1] for host in live_hosts]
+
+    for ip_address in target_hosts:
+        arp_result = arp_a(ip_address)  # Voer 'arp -a' uit voor het huidige IP-adres
+        if arp_result:
+            print(f"ARP result for {ip_address}:")
+            print(arp_result)  # Print de ARP-resultaten als er resultaten zijn
+        else:
+            print(f"No ARP result found for {ip_address}")  # Print een melding als er geen resultaten zijn gevonden
+
+
+
 
 def scan_live_ips(target_ip):
     # Maak een ARP-pakket om uit te zenden
@@ -138,6 +175,9 @@ def ping_cidr_network(cidr):
     # Ping each IP address in the subnet
     live_hosts = []
     for i in range(num_addresses):
+        # if i reaches 50, stop the loop
+        if i == 50:
+            break
         ip = base_ip + i
         response = ping(str(ip), count=1)
         if response.success():
@@ -212,8 +252,15 @@ def main():
         
         if choice== '2' and ip_address:
             abe(ip_address)
+            port_scan = input("Do you want to scan the live hosts for open ports? (y/n): ")
+            if port_scan == 'y':
+                scan_ports()
         if choice == '1':
             scan_live_ips(ip_address)
+            port_scan = input("Do you want to scan the live hosts for open ports? (y/n): ")
+            if port_scan == 'y':
+                scan_ports()
+                find_MAC()
             
         else:
             print(f"No IP found for {selected_adapter}")
