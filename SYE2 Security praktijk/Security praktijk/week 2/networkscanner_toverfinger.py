@@ -249,7 +249,7 @@ def ping_cidr_network(cidr):
     live_hosts = []
     for i in tqdm(range(num_addresses)):
         # if i reaches 50, stop the loop
-        if i == 2:
+        if i == 50:
             break
         ip = base_ip + i
         response = ping(str(ip), count=1)
