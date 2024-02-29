@@ -1,4 +1,4 @@
-IP: 192.168.1.1 MAC: None is live.
-IP: 192.168.1.10 MAC: None is live.
-IP: 192.168.1.23 MAC: None is live.
-IP: 192.168.1.30 MAC: None is live.
+IP: 192.168.1.1 MAC: f0-ad-4e-1b-b1-12 OS: FreeBSD 11.2-RELEASE Hostname: pfSense.thema23.local is live.
+IP: 192.168.1.10 MAC: b8-ca-3a-92-b1-e6 OS: Linux 5.0 - 5.5 Hostname: Unable to resolve hostname is live.
+IP: 192.168.1.23 MAC: b8-ca-3a-92-bc-a5 OS: Linux 4.15 - 5.8 Hostname: openmediavault is live.
+IP: 192.168.1.30 MAC: b8-ca-3a-92-b1-d9 OS: Linux 2.6.11 Hostname: Unable to resolve hostname is live.
