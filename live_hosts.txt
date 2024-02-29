@@ -1,0 +1,1 @@
+IP: 192.168.178.1 MAC: ac-22-05-a2-8e-b5 OS: OpenWrt Chaos Calmer 15.05 (Linux 3.18) or Designated Driver (Linux 4.1 or 4.4) Hostname: Unable to resolve hostname is live.
