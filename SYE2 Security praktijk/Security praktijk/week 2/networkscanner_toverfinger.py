@@ -83,7 +83,7 @@ def scan_port(host, port, open_ports):
         print(f"Fout bij het scannen van poort {port}: {e}")  # Druk de fout af
 
 
-def scan_ports(live_hosts_file):
+def scan_ports():
     """
     Scans a range of ports on a list of hosts. 
     The hosts are read from a file named 'live_hosts.txt'.
@@ -98,11 +98,14 @@ def scan_ports(live_hosts_file):
     Returns:
     None
     """
+
+    global live_hosts_file_global
+    live_hosts = open("live_hosts.txt", "r", encoding='utf-8')
     #  Lijst van IP-adressen om te scannen
     #  gets all the live hosts from live_hosts_file
     #  and stores them in a list
 
-    live_hosts = live_hosts_file.readlines()
+    
     target_hosts = [host.split()[1] for host in live_hosts]
     min_port = 1  # Minimale poort
     max_port = 65535  # Maximale poort
@@ -131,7 +134,7 @@ def scan_ports(live_hosts_file):
         open_ports_str = ", ".join([f"{port} ({service})"
                                     for port, service in open_ports])
         print(f"IP: {target_host}, OpenPoort(en): {open_ports_str}")
-
+        live_hosts_file_global.close()
 
 def get_hostname(ip_address):
     """
@@ -151,16 +154,8 @@ def get_hostname(ip_address):
         return "Unable to resolve hostname"
 
 
-def scan_live_ips(cidr):
+def scan_live_ips(cidr, network_interface):
 
-    """
-    Ping all IP addresses in a given CIDR network and return a list
-    of live hosts.
-    Args:
-        cidr (str): The CIDR notation representing the network.
-    Returns:
-        list: A list of live host IP addresses.
-    """
     # Verkrijg basis-IP-adres en aantal hostbits van CIDR-notatie
     ip_network = ipaddress.ip_network(cidr, strict=False)
     base_ip = ip_network.network_address
@@ -174,26 +169,37 @@ def scan_live_ips(cidr):
     global live_hosts_file_global, unreachable_hosts_file
     live_hosts_file_global = open("live_hosts.txt", "a", encoding='utf-8')
     unreachable_hosts_file = open("unreachable_hosts.txt", "a", encoding='utf-8')
-    print (arp_output = subprocess.check_output(
-            ['arp', '-a', ip_address]).decode('utf-8'))
+
     # Ping each IP address in the subnet
     live_hosts = []
     for i in tqdm(range(num_addresses)):
         # if i reaches 50, stop the loop
         if i == 50:
             break
-        ip = base_ip + i
-        response = ping(str(ip), count=1)
-        if response.success():
-            mac_address = get_mac_address(str(ip))
+        ip = str(base_ip + i)
+        print (f"Scanning {ip}")
+        # Create an ARP request packet
+        arp = ARP(pdst=ip)
+        # Create an Ethernet frame
+        ether = Ether(dst="ff:ff:ff:ff:ff:ff")
+        # Combine the Ethernet frame and the ARP packet
+        packet = ether / arp
+        print (f"Packet: {packet}")
+        # Send the packet and receive responses
+        print (network_interface)
+        result = srp(packet, timeout=3, verbose=0, iface=network_interface)[0]
+        print (f"Result: {result}")
+        # If we received at least one response, the IP is live
+        if len(result) > 0:
+            mac_address = get_mac_address(ip)
             #  call scan_ip function
-            os_type = scan_ip(str(ip))
-            hostname = get_hostname(str(ip))
+            os_type = scan_ip(ip)
+            hostname = get_hostname(ip)
             live_hosts_file_global.write(f"IP: {ip} "
-                                  f"MAC: {mac_address} "
-                                  f"OS: {os_type} "
-                                  f"Hostname: {hostname} "
-                                  f"is live.\n")
+                              f"MAC: {mac_address} "
+                              f"OS: {os_type} "
+                              f"Hostname: {hostname} "
+                              f"is live.\n")
             print(f"\nHit on\n"
                   f"IP: {ip} \n"
                   f"MAC: {mac_address} \n"
@@ -201,7 +207,6 @@ def scan_live_ips(cidr):
                   f"Hostname: {hostname} \n")
             live_hosts.append((ip, mac_address))
         else:
-            # print(f"{ip} is not reachable.")
             unreachable_hosts_file.write(f"{ip} is not reachable.\n")
 
     # Close the file objects
@@ -244,7 +249,7 @@ def ping_cidr_network(cidr):
     live_hosts = []
     for i in tqdm(range(num_addresses)):
         # if i reaches 50, stop the loop
-        if i == 50:
+        if i == 2:
             break
         ip = base_ip + i
         response = ping(str(ip), count=1)
@@ -294,6 +299,9 @@ def get_mac_address(ip_address):
             ['arp', '-a', ip_address]).decode('utf-8')
         #  return the output of 'arp -a' but only the mac address
         #  if the arp output is empty, return unknown
+        arp_output_split = arp_output.split()
+        if len(arp_output_split) < 11:
+            return None
         if not arp_output:
             return "Unknown"
         else:
@@ -332,6 +340,7 @@ class bcolors:
     ENDC = '\033[0m'
     BOLD = '\033[1m'
     UNDERLINE = '\033[4m'
+    OKRED = '\033[31m'
 
 
 def main():
@@ -341,51 +350,54 @@ def main():
     get the IP range from ipconfig.
     """
     clear_terminal()
-    print(f"{bcolors.WARNING}Warning: test{bcolors.ENDC}")
+    print(f"{bcolors.UNDERLINE}{bcolors.BOLD}{bcolors.OKGREEN}Welcome to the network scanner!{bcolors.ENDC}")
     print("1. Enter IP range manually")
     print("2. Get IP range from ipconfig")
-    choice = input("Enter your choice (1 or 2): ")
+    choice = input(f"{bcolors.OKRED}Enter your choice (1 or 2): ")
     clear_terminal()
     if choice == '2':
         clear_terminal()
-        print("Getting IP range...")
+        print(f"{bcolors.UNDERLINE}{bcolors.BOLD}{bcolors.OKGREEN}Network Adapters{bcolors.ENDC}")
         adapters = get_network_adapters()
         for i, adapter in enumerate(adapters, start=1):
             print(f"{i}. {adapter[0]}")
-        selected_adapter_index = int(input("Select a network adapter: ")) - 1
+        selected_adapter_index = int(input(f"{bcolors.OKRED}Select a network adapter: ")) - 1
         clear_terminal()
         selected_adapter = adapters[selected_adapter_index]
         ip_address = selected_adapter[1]
-        print("1. Get IP range from ipconfig (fast but less accurate)")
-        print("2. Get IP range from network adapters (slow but accurate)")
-        choice = input("Enter your choice (1 or 2): ")
+        print(f"{bcolors.UNDERLINE}{bcolors.BOLD}{bcolors.OKGREEN}Select type of scan{bcolors.ENDC}")
+        print("1. Get IP range from arp requests (Layer 2 scan)")
+        print("2. Get IP range from network adapter (Layer 3 scan)")
+        choice = input(f"{bcolors.OKRED}Enter your choice (1 or 2): {bcolors.ENDC}")
         print(f"IP address of {ip_address}")
         print(ip_address)
 
         if choice == '2' and ip_address:
             abe(ip_address)
             port_scan = input(
-                "Do you want to scan the live hosts for open ports? (y/n): ")
+                f"{bcolors.UNDERLINE}{bcolors.BOLD}{bcolors.OKGREEN}"
+                f"Do you want to scan the live hosts for open ports? (y/n): ")
             if port_scan == 'y':
-                scan_ports(live_hosts_file_global)
+                scan_ports()
         if choice == '1':
-            scan_live_ips(ip_address)
+            scan_live_ips(ip_address, selected_adapter[0])
             port_scan = input(
-                "Do you want to scan the live hosts for open ports? (y/n): ")
+                f"{bcolors.UNDERLINE}{bcolors.BOLD}{bcolors.OKGREEN}"
+                f"Do you want to scan the live hosts for open ports? (y/n): ")
             if port_scan == 'y':
-                scan_ports(live_hosts_file_global)
+                scan_ports()
             else:
                 #  exit the program
                 exit()
         if not ip_address:
-            print(f"No IP found for {selected_adapter}")
+            print(f"{bcolors.WARNING}No IP found for {selected_adapter}")
         # else:
         #     print(f"No IP found for {selected_adapter}")
     else:
         clear_terminal()
         # Handle manual IP range entry
-        ip_range = input("Enter the IP range (e.g., 192.168.1.0/24): ")
-        print(f"You entered: {ip_range}")
+        ip_range = input(f"{bcolors.UNDERLINE}{bcolors.BOLD}{bcolors.OKGREEN}Enter the IP range (e.g., 192.168.1.0/24): ")
+        print(f"{bcolors.ENDC}You entered: {ip_range}")
 
 
 if __name__ == "__main__":
