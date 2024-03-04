@@ -3,6 +3,7 @@ from string import ascii_lowercase, digits
 import os
 
 
+
 async def client_stub(username, password):
     """Handle sending and receiving logins to/from the server.
     'while True' structure prevents singular network/socket
@@ -59,6 +60,8 @@ def call_server(username, password):
     
     reply, time_delta = asyncio.get_event_loop().\
             run_until_complete(client_stub(username,password))
+    #save_output_to_txt(reply+str(time_delta)+ enter)
+    save_output_to_txt(reply+str(time_delta)+ '\n')
     if reply[-15:] == 'Access Granted!':
         print('Correct password found: {}'.format(password))
     time.sleep(0.001) # Make sure to wait so as to not overload the server!
@@ -105,6 +108,14 @@ def clear_terminal():
         os.system('clear')
     return
 
+def save_output_to_txt(output):
+    """Saves the output of the program to a text file.
+    Purely for visual purposes.
+    """
+    
+    with open('output.txt', 'a') as f:
+        f.write(output)
+    return
 
 
 print(call_server('000000','hunter2'))
