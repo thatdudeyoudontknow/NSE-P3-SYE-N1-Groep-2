@@ -1,5 +1,6 @@
 import socket, sys, asyncio, websockets, json, time, string, operator, statistics
 from string import ascii_lowercase, digits
+import os
 
 
 async def client_stub(username, password):
@@ -39,6 +40,7 @@ async def client_stub(username, password):
 
 # Basic function for calling server
 def call_server(username, password):
+    clear_terminal()
     print('Sending login attempt for username: {} and password: {}'.format(username, password))
     """Send a login attempt to the server and return the response.
 
@@ -91,6 +93,17 @@ def print_stats(response_times):
     print(f'Stdev with delay: {round(st_dev_delay, 4)}')
     return
     
+
+def clear_terminal():
+    """Clears the terminal screen. Purely for visual purposes.
+    uses the cls for windows and clear for unix systems.
+    """
+    
+    if sys.platform == 'win32':
+        os.system('cls')
+    else:
+        os.system('clear')
+    return
 
 
 
