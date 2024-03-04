@@ -1,5 +1,7 @@
 import socket, sys, asyncio, websockets, json, time, string, operator, statistics
 from string import ascii_lowercase, digits
+
+
 async def client_stub(username, password):
     """Handle sending and receiving logins to/from the server.
     'while True' structure prevents singular network/socket
@@ -16,7 +18,7 @@ async def client_stub(username, password):
     -------
         reply -- string of server's response to login attempt
     """
-    
+    #server_address = "ws://127.0.0.1:3840"
     server_address = "ws://192.168.1.10:3840"
     err_count=0
     while True:
@@ -37,6 +39,7 @@ async def client_stub(username, password):
 
 # Basic function for calling server
 def call_server(username, password):
+    print('Sending login attempt for username: {} and password: {}'.format(username, password))
     """Send a login attempt to the server and return the response.
 
     --- deze functie mag je aanpassen ---
@@ -91,7 +94,7 @@ def print_stats(response_times):
 
 
 
-print(call_server('test','test'))
+print(call_server('000000','hunter2'))
 
 
 
