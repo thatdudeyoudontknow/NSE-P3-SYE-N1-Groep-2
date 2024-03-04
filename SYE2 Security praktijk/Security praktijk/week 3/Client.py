@@ -1,6 +1,7 @@
 import asyncio, websockets
 from json import dumps, loads
 from time import sleep
+from string import ascii_lowercase, digits
 
 async def client_connect(username, password, variance=0.0):
     """Handle sending and receiving logins to & from the server.
@@ -18,8 +19,8 @@ async def client_connect(username, password, variance=0.0):
         reply -- string of server's response to login attempt
     """
 
-    server_address = "ws://20.224.193.77:3840"
-    #server_address = "ws://127.0.0.1:3840"
+    #server_address = "ws://20.224.193.77:3840"
+    server_address = "ws://127.0.0.1:3840"
     
     while True:
         try:
