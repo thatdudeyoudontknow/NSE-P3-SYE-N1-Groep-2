@@ -77,12 +77,12 @@ def length_password(username, passwordlength):
         
         resultaat += "o"
         for x in range(10):
-            
-            if len(resultaat) > 1:
+            print (i, x)
+            if len(resultaat) > 0:
                 reply,time_delta =call_server(username, resultaat)
                 
                 save_output_to_txt('Sending login attempt for username: {} and password: {}'.format(username, resultaat)+ (" "*(passwordlength- len(resultaat)))+ ' response time = '+str(time_delta)+ '\n')
-                print(f'{resultaat}')
+                
 
 
 
