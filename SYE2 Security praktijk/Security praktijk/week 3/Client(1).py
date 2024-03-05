@@ -41,7 +41,7 @@ async def client_stub(username, password):
 
 # Basic function for calling server
 def call_server(username, password):
-    clear_terminal()
+    #clear_terminal()
     print('Sending login attempt for username: {} and password: {}'.format(username, password))
     """Send a login attempt to the server and return the response.
 
@@ -61,11 +61,26 @@ def call_server(username, password):
     reply, time_delta = asyncio.get_event_loop().\
             run_until_complete(client_stub(username,password))
     #save_output_to_txt(reply+str(time_delta)+ enter)
-    save_output_to_txt(str(time_delta)+ '\n')
+    
     if reply[-15:] == 'Access Granted!':
         print('Correct password found: {}'.format(password))
     time.sleep(0.001) # Make sure to wait so as to not overload the server!
+    
     return reply, time_delta
+
+def length_password(username, passwordlength):
+    resultaat = "" 
+    call_server("","")
+    for i in range(passwordlength):
+        resultaat += "o"
+        if len(resultaat) > 1:
+            reply,time_delta =call_server(username, resultaat)
+            
+            save_output_to_txt('Sending login attempt for username: {} and password: {}'.format(username, resultaat)+ (" "*(passwordlength- len(resultaat)))+ ' response time = '+str(time_delta)+ '\n')
+            print(f'{resultaat}')
+        
+     
+
 
 def print_stats(response_times):
     """Prints some statistical information about the latest
@@ -140,8 +155,11 @@ def main():
     """
 
     username = '000000'
-    password = 'hunter2'
-    call_server(username, password)
+   # password = 'hunter2'
+    passwordlength = int(input("Geef de lengte van de string: "))
+    length_password(username, passwordlength)
+    
+    #call_server(username, password)
     print ('done')
 
 

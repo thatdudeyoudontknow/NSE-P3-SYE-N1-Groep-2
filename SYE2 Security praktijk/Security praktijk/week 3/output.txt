@@ -1,8 +1,9 @@
-0.06480669998563826
-0.04260169999906793
-0.058836599986534566
-0.0566126000485383
-0.02756789996055886
-0.05551089998334646
-0.0508644999936223
-0.05127980001270771
+Sending login attempt for username: 000000 and password: oo         response time = 0.0062744999886490405
+Sending login attempt for username: 000000 and password: ooo        response time = 0.005868999985978007
+Sending login attempt for username: 000000 and password: oooo       response time = 0.005518000049050897
+Sending login attempt for username: 000000 and password: ooooo      response time = 0.005426099989563227
+Sending login attempt for username: 000000 and password: oooooo     response time = 0.005614899971988052
+Sending login attempt for username: 000000 and password: ooooooo    response time = 0.008170000044628978
+Sending login attempt for username: 000000 and password: oooooooo   response time = 0.006010100012645125
+Sending login attempt for username: 000000 and password: ooooooooo  response time = 0.005512600007932633
+Sending login attempt for username: 000000 and password: oooooooooo response time = 0.006017899955622852
