@@ -61,7 +61,7 @@ def call_server(username, password):
     reply, time_delta = asyncio.get_event_loop().\
             run_until_complete(client_stub(username,password))
     #save_output_to_txt(reply+str(time_delta)+ enter)
-    save_output_to_txt(reply+str(time_delta)+ '\n')
+    save_output_to_txt(str(time_delta)+ '\n')
     if reply[-15:] == 'Access Granted!':
         print('Correct password found: {}'.format(password))
     time.sleep(0.001) # Make sure to wait so as to not overload the server!
@@ -117,13 +117,36 @@ def save_output_to_txt(output):
         f.write(output)
     return
 
+# make a function that takes all the resut times from output.txt and makes a histogram of it
+def make_histogram():
+    """Makes a histogram of the response times from the output.txt file.
+    """
+    
+    with open('output.txt', 'r') as f:
+        lines = f.readlines()
+        response_times = []
+        for line in lines:
+            if 'Access Granted!' in line:
+                response_times.append(float(line.split(' ')[-1]))
+    response_times.sort()
+    print_stats(response_times)
+    return
 
-print(call_server('000000','hunter2'))
+#print(call_server('000000','hunter2'))
+
+def main():
+    """Main function. Loops through all possible passwords
+    and sends them to the server.
+    """
+
+    username = '000000'
+    password = 'hunter2'
+    call_server(username, password)
+    print ('done')
 
 
-
-
-
+if __name__ == '__main__':
+    main()
 
 
 
