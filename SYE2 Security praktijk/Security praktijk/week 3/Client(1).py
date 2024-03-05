@@ -1,7 +1,7 @@
 import socket, sys, asyncio, websockets, json, time, string, operator, statistics
 from string import ascii_lowercase, digits
 import os
-
+import statistics
 
 async def client_stub(username, password):
     """Handle sending and receiving logins to/from the server.
@@ -68,6 +68,25 @@ def call_server(username, password):
     
     return reply, time_delta
 
+def test():
+   
+
+    # Read response times from the text file
+    with open('output.txt', 'r') as f:
+        lines = f.readlines()
+        response_times = [float(line.split('=')[-1]) for line in lines]
+
+    # Group response times into sets of 10
+    response_time_groups = [response_times[i:i+10] for i in range(0, len(response_times), 10)]
+
+    # Calculate and print the average response time for each group
+    for i, group in enumerate(response_time_groups):
+        print(f'Average response time for group {i+1}: {statistics.mean(group)}')
+    #Find and print the highest response time of the groups and print the index of the group
+    max_group = max(response_time_groups, key=statistics.mean)
+    print(f'Group with highest average response time: {response_time_groups.index(max_group)+1}')
+   
+
 
 def length_password(username, passwordlength):
 
@@ -79,9 +98,9 @@ def length_password(username, passwordlength):
             
             if len(resultaat) > 0:
                 reply,time_delta =call_server(username, resultaat)
-                
+
                 save_output_to_txt('Sending login attempt for username: {} and password: {}'.format(username, resultaat)+ (" "*(passwordlength- len(resultaat)))+ ' response time = '+str(time_delta)+ '\n')
-                
+
 
 
 
@@ -167,7 +186,7 @@ def main():
     
     #call_server(username, password)
     print ('done')
-
+    test()
 
 if __name__ == '__main__':
     main()
