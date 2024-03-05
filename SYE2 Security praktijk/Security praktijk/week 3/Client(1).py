@@ -73,6 +73,7 @@ def length_password(username, passwordlength):
     call_server("","")
     for i in range(passwordlength):
         resultaat += "o"
+        
         if len(resultaat) > 1:
             reply,time_delta =call_server(username, resultaat)
             
