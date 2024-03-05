@@ -3,7 +3,6 @@ from string import ascii_lowercase, digits
 import os
 
 
-
 async def client_stub(username, password):
     """Handle sending and receiving logins to/from the server.
     'while True' structure prevents singular network/socket
@@ -39,6 +38,7 @@ async def client_stub(username, password):
             err_count+=1
             continue
 
+
 # Basic function for calling server
 def call_server(username, password):
     #clear_terminal()
@@ -68,19 +68,22 @@ def call_server(username, password):
     
     return reply, time_delta
 
+
 def length_password(username, passwordlength):
-    resultaat = "" 
+
     call_server("","")
+    resultaat = ""
     for i in range(passwordlength):
+        
         resultaat += "o"
-        
-        if len(resultaat) > 1:
-            reply,time_delta =call_server(username, resultaat)
+        for x in range(10):
             
-            save_output_to_txt('Sending login attempt for username: {} and password: {}'.format(username, resultaat)+ (" "*(passwordlength- len(resultaat)))+ ' response time = '+str(time_delta)+ '\n')
-            print(f'{resultaat}')
-        
-     
+            if len(resultaat) > 1:
+                reply,time_delta =call_server(username, resultaat)
+                
+                save_output_to_txt('Sending login attempt for username: {} and password: {}'.format(username, resultaat)+ (" "*(passwordlength- len(resultaat)))+ ' response time = '+str(time_delta)+ '\n')
+                print(f'{resultaat}')
+
 
 
 def print_stats(response_times):
@@ -111,7 +114,7 @@ def print_stats(response_times):
     print(f'Stdev w/o delay: {round(st_dev, 4)}')
     print(f'Stdev with delay: {round(st_dev_delay, 4)}')
     return
-    
+
 
 def clear_terminal():
     """Clears the terminal screen. Purely for visual purposes.
@@ -124,6 +127,7 @@ def clear_terminal():
         os.system('clear')
     return
 
+
 def save_output_to_txt(output):
     """Saves the output of the program to a text file.
     Purely for visual purposes.
@@ -131,7 +135,10 @@ def save_output_to_txt(output):
     
     with open('output.txt', 'a') as f:
         f.write(output)
+    #close the file
+    f.close()
     return
+
 
 # make a function that takes all the resut times from output.txt and makes a histogram of it
 def make_histogram():
@@ -148,7 +155,6 @@ def make_histogram():
     print_stats(response_times)
     return
 
-#print(call_server('000000','hunter2'))
 
 def main():
     """Main function. Loops through all possible passwords
