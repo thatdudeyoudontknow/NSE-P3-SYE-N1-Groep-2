@@ -77,10 +77,14 @@ def find_real_password_length(password_length):
 
     # Group response times into sets of 10
     # Group response times into sets of password_length
-    response_time_groups = [response_times[i:i+password_length] for i in range(0, len(response_times), password_length)]
+    
+    #group the response times into sets of 200 and calculate the average of each group
+    response_time_groups = [response_times[i:i+200] for i in range(0, len(response_times), 200)]
 
+    
     # Limit the number of groups to the user's input of password length
     response_time_groups = response_time_groups[:password_length]
+    
 
     # Calculate and print the average response time for each group
     for i, group in enumerate(response_time_groups):
