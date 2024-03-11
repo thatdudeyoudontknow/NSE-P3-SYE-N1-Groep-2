@@ -249,3 +249,14 @@ def main():
 
 if __name__ == '__main__':
     main()
+
+
+
+#lengte ww 
+# for i in len(ww):
+#  voeg character toe
+#  200x doen
+#   berken/save avg
+#
+#  bereken reactie(kortste)
+#   avg.sort.sort
