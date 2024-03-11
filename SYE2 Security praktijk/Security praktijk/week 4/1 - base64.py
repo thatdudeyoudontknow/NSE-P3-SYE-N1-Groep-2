@@ -1,3 +1,5 @@
+import base64
+
 def string_to_b64(asciiString):
     """
     Converts a given ASCII-string to its b64-encoded equivalent.
@@ -12,6 +14,7 @@ def string_to_b64(asciiString):
     bytes
         b64-encoded bytes-object representing the original string
     """
+    b64String=base64.b64encode(asciiString.encode())
 
     return b64String
 
@@ -33,9 +36,23 @@ def b64_to_string(b64String):
     string
         ASCII string
     """
-
+    asciiString=base64.b64decode(b64String).decode()
     return asciiString
 
 # Laat deze asserts onaangetast!
 assert type(b64_to_string("SGVsbG8gV29ybGQ=")) == str
 assert b64_to_string("SGVsbG8gV29ybGQ=") == "Hello World"
+
+def clear_screen():
+    """
+    Clears the screen
+    """
+    print("\033c", end="")
+
+def main():
+    clear_screen()
+    print(string_to_b64("Hello World"))
+    print(b64_to_string("SGVsbG8gV29ybGQ="))
+
+if __name__ == "__main__":
+    main()
