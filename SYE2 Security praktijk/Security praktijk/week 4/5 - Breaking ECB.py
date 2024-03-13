@@ -1,6 +1,8 @@
 from base64 import b64decode
-from Crypto.Cipher import AES
+#from Crypto.Cipher import AES
+from Cryptodome.Cipher import AES
 from secrets import token_bytes
+from Cryptodome.Util.Padding import pad
 
 def pkcs7_pad(plaintext, blocksize):
     """Appends the plaintext with n bytes,
@@ -72,11 +74,12 @@ def find_block_length():
     for i in range(1, 100):
         plaintext += b'A'
         new_ciphertext = ECB_oracle(plaintext, key)
-        print(new_ciphertext)
+        print (plaintext, len(new_ciphertext))
         if len(new_ciphertext) != len(ciphertext):
             blocksize = len(new_ciphertext) - len(ciphertext)
             break
-            
+        #print (new_ciphertext)    
+        #print (i)
     return blocksize
 
 

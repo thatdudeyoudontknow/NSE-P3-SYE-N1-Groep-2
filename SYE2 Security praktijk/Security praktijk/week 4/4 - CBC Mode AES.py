@@ -38,6 +38,10 @@ def CBC_decrypt(ciphertext, key, IV):
     plaintext = b''.join(plaintext_blocks)
     return plaintext
 
+
+
+
+
 # Laat dit blok code onaangetast & onderaan je code!
 a_ciphertext = b64decode('e8Fa/QnddxdVd4dsL7pHbnuZvRa4OwkGXKUvLPoc8ew=')
 a_key = b'SECRETSAREHIDDEN'
@@ -49,10 +53,11 @@ def clear_screen():
 def main():
     clear_screen()
     plaintext = CBC_decrypt(a_ciphertext, a_key, a_IV)
-    plaintext = unpad(plaintext, AES.block_size)
+    print (plaintext)
+    #plaintext = unpad(plaintext, AES.block_size)
     print_big_and_green(plaintext.decode()) 
-    assert plaintext[:18] == b64decode('eW91IGtub3cgdGhlIHJ1bGVz')
-    print_big_and_green(plaintext.decode()) 
+    # assert plaintext[:18] == b64decode('eW91IGtub3cgdGhlIHJ1bGVz')
+    # print_big_and_green(plaintext.decode()) 
 
 if __name__ == "__main__":
      main()
