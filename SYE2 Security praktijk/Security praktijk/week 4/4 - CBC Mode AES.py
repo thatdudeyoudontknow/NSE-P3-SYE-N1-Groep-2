@@ -51,6 +51,8 @@ def main():
     plaintext = CBC_decrypt(a_ciphertext, a_key, a_IV)
     plaintext = unpad(plaintext, AES.block_size)
     print_big_and_green(plaintext.decode()) 
+    assert plaintext[:18] == b64decode('eW91IGtub3cgdGhlIHJ1bGVz')
+    print_big_and_green(plaintext.decode()) 
 
 if __name__ == "__main__":
      main()
