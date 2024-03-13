@@ -52,6 +52,7 @@ def ECB_oracle(plaintext, key):
     return ciphertext
 
 # Genereer een willekeurige key
+
 key = token_bytes(16)
 
 #####################################
@@ -74,7 +75,7 @@ def find_block_length():
     for i in range(1, 100):
         plaintext += b'A'
         new_ciphertext = ECB_oracle(plaintext, key)
-        print (plaintext, len(new_ciphertext))
+        #print (plaintext, len(new_ciphertext))
         if len(new_ciphertext) != len(ciphertext):
             blocksize = len(new_ciphertext) - len(ciphertext)
             break
@@ -82,10 +83,34 @@ def find_block_length():
         #print (i)
     return blocksize
 
+# def get_target_ciphertext(blocksize):
+#     padding = b'A' * (blocksize - 1)
+#     target_ciphertext = ECB_oracle(padding, key)
+#     return target_ciphertext
+
+def get_target_ciphertext(blocksize):
+    padding = b'A' * (blocksize - 1)  # Create a padding of blocksize - 1 bytes
+    target_ciphertext = ECB_oracle(padding, key)
+    return target_ciphertext
+
+
+def clear_screen():
+    print("\033c", end="")
 
 def main():
+    clear_screen()
     blocksize = find_block_length()
-    print(blocksize)
+    target_ciphertext = get_target_ciphertext(blocksize)
+
+    # Print column numbers
+    print('   |', ' | '.join(f'{i:02}' for i in range(1, 17)), '|')
+
+    # Print the ciphertext in chunks of 16 bytes
+    for i in range(0, len(target_ciphertext), 16):
+        chunk = target_ciphertext[i:i+16]
+        hex_chunk = ' | '.join(f'{byte:02x}' for byte in chunk)
+        # Print row number and chunk
+        print(f'{i//16 + 1:02} |', hex_chunk, '|')
 
 if __name__ == "__main__":
     main()
