@@ -65,7 +65,25 @@ def find_block_length():
     blocksize : integer
         blocksize used by ECB oracle
     """
-
+# make a for loop and add a byte to the plaintext each time until the length of the ciphertext changes
+    plaintext = b''
+    ciphertext = ECB_oracle(plaintext, key)
+    blocksize = 0
+    for i in range(1, 100):
+        plaintext += b'A'
+        new_ciphertext = ECB_oracle(plaintext, key)
+        print(new_ciphertext)
+        if len(new_ciphertext) != len(ciphertext):
+            blocksize = len(new_ciphertext) - len(ciphertext)
+            break
+            
     return blocksize
 
 
+def main():
+    blocksize = find_block_length()
+    print(blocksize)
+
+if __name__ == "__main__":
+    main()
+    
