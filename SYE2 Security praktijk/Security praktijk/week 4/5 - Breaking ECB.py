@@ -94,6 +94,20 @@ def get_target_ciphertext(blocksize):
     return target_ciphertext
 
 
+def break_ECB(blocksize):
+    recovered = b''
+    for _ in range(blocksize):
+        for i in range(256):
+            padding = b'A' * (blocksize - len(recovered) - 1)
+            data = padding + recovered + bytes([i])
+            print (data)
+            print (bytes([i]))
+            block = ECB_oracle(data, key)[:blocksize]
+            if block == ECB_oracle(padding, key)[:blocksize]:
+                recovered += bytes([i])
+                break
+    return recovered
+
 def clear_screen():
     print("\033c", end="")
 
@@ -112,6 +126,8 @@ def main():
         # Print row number and chunk
         print(f'{i//16 + 1:02} |', hex_chunk, '|')
 
+    secret = break_ECB(blocksize)
+    print(secret)
 if __name__ == "__main__":
     main()
     
