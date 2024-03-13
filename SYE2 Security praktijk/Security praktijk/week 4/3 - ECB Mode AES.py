@@ -1,5 +1,7 @@
 from base64 import b64decode
-from Crypto.Cipher import AES
+from Cryptodome.Cipher import AES
+#import AES
+
 
 def ECB_decrypt(ciphertext, key):
 
