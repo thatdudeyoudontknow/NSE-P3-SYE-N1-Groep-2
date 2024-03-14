@@ -1,8 +1,7 @@
 from base64 import b64decode
-#from Crypto.Cipher import AES
 from Cryptodome.Cipher import AES
 from secrets import token_bytes
-from Cryptodome.Util.Padding import pad
+
 
 def pkcs7_pad(plaintext, blocksize):
     """Appends the plaintext with n bytes,
@@ -83,25 +82,55 @@ def find_block_length():
         #print (i)
     return blocksize
 
-# def get_target_ciphertext(blocksize):
-#     padding = b'A' * (blocksize - 1)
-#     target_ciphertext = ECB_oracle(padding, key)
-#     return target_ciphertext
+
 
 def get_target_ciphertext(blocksize):
+    """
+    Generates the target ciphertext using the ECB oracle.
+
+    This function creates a padding of 'blocksize - 1' bytes and uses it as input to the ECB oracle 
+    to generate the target ciphertext.
+
+    Parameters
+    ----------
+    blocksize : int
+        The block size of the block cipher in bytes.
+
+    Returns
+    -------
+    bytes
+        The target ciphertext as a bytes object.
+    """
     padding = b'A' * (blocksize - 1)  # Create a padding of blocksize - 1 bytes
     target_ciphertext = ECB_oracle(padding, key)
     return target_ciphertext
 
 
 def break_ECB(blocksize):
+    """
+    Breaks the ECB (Electronic Code Book) mode of operation for block ciphers.
+
+    This function uses a padding oracle attack to recover the plaintext from a block cipher encrypted 
+    in ECB mode. It iteratively guesses each byte of the block by comparing the output of the ECB oracle 
+    with a block of data that includes the guessed byte.
+
+    Parameters
+    ----------
+    blocksize : int
+        The block size of the block cipher in bytes.
+
+    Returns
+    -------
+    bytes
+        The recovered plaintext as a bytes object.
+    """
     recovered = b''
     for _ in range(blocksize):
         for i in range(256):
             padding = b'A' * (blocksize - len(recovered) - 1)
             data = padding + recovered + bytes([i])
-            print (data)
-            print (bytes([i]))
+            #print (data)
+            #print (bytes([i]))
             block = ECB_oracle(data, key)[:blocksize]
             if block == ECB_oracle(padding, key)[:blocksize]:
                 recovered += bytes([i])
@@ -109,6 +138,16 @@ def break_ECB(blocksize):
     return recovered
 
 def clear_screen():
+    """
+    Clears the terminal screen.
+
+    This function uses an escape sequence to clear the terminal screen. The escape sequence "\033c" is 
+    recognized by many terminal types as the command to clear the screen.
+
+    Returns
+    -------
+    None
+    """
     print("\033c", end="")
 
 def main():
@@ -116,15 +155,15 @@ def main():
     blocksize = find_block_length()
     target_ciphertext = get_target_ciphertext(blocksize)
 
-    # Print column numbers
-    print('   |', ' | '.join(f'{i:02}' for i in range(1, 17)), '|')
+    # # Print column numbers
+    # print('   |', ' | '.join(f'{i:02}' for i in range(1, 17)), '|')
 
-    # Print the ciphertext in chunks of 16 bytes
-    for i in range(0, len(target_ciphertext), 16):
-        chunk = target_ciphertext[i:i+16]
-        hex_chunk = ' | '.join(f'{byte:02x}' for byte in chunk)
-        # Print row number and chunk
-        print(f'{i//16 + 1:02} |', hex_chunk, '|')
+    # # Print the ciphertext in chunks of 16 bytes
+    # for i in range(0, len(target_ciphertext), 16):
+    #     chunk = target_ciphertext[i:i+16]
+    #     hex_chunk = ' | '.join(f'{byte:02x}' for byte in chunk)
+    #     # Print row number and chunk
+    #     print(f'{i//16 + 1:02} |', hex_chunk, '|')
 
     secret = break_ECB(blocksize)
     print(secret)
