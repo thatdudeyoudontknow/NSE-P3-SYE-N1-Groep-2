@@ -110,8 +110,8 @@ def break_ECB(blocksize):
     """
     Breaks the ECB (Electronic Code Book) mode of operation for block ciphers.
 
-    This function uses a padding oracle attack to recover the plaintext from a block cipher encrypted 
-    in ECB mode. It iteratively guesses each byte of the block by comparing the output of the ECB oracle 
+    This function uses a padding oracle attack to recover the plaintext from a block cipher encrypted
+    in ECB mode. It iteratively guesses each byte of the block by comparing the output of the ECB oracle
     with a block of data that includes the guessed byte.
 
     Parameters
@@ -125,17 +125,32 @@ def break_ECB(blocksize):
         The recovered plaintext as a bytes object.
     """
     recovered = b''
-    for _ in range(blocksize):
-        for i in range(256):
-            padding = b'A' * (blocksize - len(recovered) - 1)
-            data = padding + recovered + bytes([i])
-            #print (data)
-            #print (bytes([i]))
-            block = ECB_oracle(data, key)[:blocksize]
-            if block == ECB_oracle(padding, key)[:blocksize]:
-                recovered += bytes([i])
+    target_ciphertext = get_target_ciphertext(blocksize)
+    blocks = [target_ciphertext[i:i+blocksize] for i in range(0, len(target_ciphertext), blocksize)]
+
+    for block_num, block in enumerate(blocks):
+        decrypted_block = b''
+        for byte_num in range(blocksize):
+            comparison_made = False
+            for i in range(256):
+                padding = b'A' * (blocksize - byte_num - 1)
+                data = padding + recovered + decrypted_block + bytes([i])
+                cipher_block = ECB_oracle(data, key)[block_num*blocksize:(block_num+1)*blocksize]
+                padding_block = ECB_oracle(padding, key)[block_num*blocksize:(block_num+1)*blocksize]
+                if cipher_block == padding_block:
+                    decrypted_block += bytes([i])
+                    comparison_made = True
+                    break
+            if not comparison_made:
                 break
+        recovered += decrypted_block
+        print(f"Decrypted Block {block_num + 1}:", decrypted_block)
+
     return recovered
+
+
+# Rest van je code blijft hetzelfde
+
 
 def clear_screen():
     """
